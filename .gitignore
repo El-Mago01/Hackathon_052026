@@ -1,0 +1,9 @@
+.venv/
+.idea/
+api_key.py
+api_key.test
+api_key.old
+.venv3.12
+.gitignore
+__pycache__
+Documents/.~lock.Child's-wiki quizzz.odp#
