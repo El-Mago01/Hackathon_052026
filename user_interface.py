@@ -25,7 +25,7 @@ class BColors:
     BOLD = "\033[1m"
     UNDERLINE = "\033[4m"
 
-def print_image_ascii_art(selected_category, stop_event, sleep_time:float=0.4,
+def print_image_ascii_art(selected_category, stop_event, sleep_time:float=0.5,
                           width:int=80, height:int=40):
     image_to_convert = os.path.join(IMAGES_DIR, selected_category+".jpg")
     ASCII = "@%#*+=-:. "
@@ -34,7 +34,10 @@ def print_image_ascii_art(selected_category, stop_event, sleep_time:float=0.4,
     img = img.resize((width, height))
     img = img.convert("L")
     pixels = img.getdata()
-    chars = "".join(ASCII[pixel // 26] for pixel in pixels)
+    chars = ""
+    for pixel in pixels:
+        chars += ASCII[pixel // 26]
+    #chars = "".join(ASCII[pixel // 26] for pixel in pixels)
     for i in range(0, len(chars), width):
         time.sleep(sleep_time)
         print(BColors.ART + chars[i:i+width] + BColors.ENDC)
@@ -151,6 +154,9 @@ def play_game_again() -> bool:
     else:
         return False
 
+def show_prep_waiting_sign():
+    print(f"{BColors.ART} The questions are being prepared. Meanwhile, "
+          f"can you guess what is appearing on screen?{BColors.ENDC}")
 
 def display_final_scoreboard(round_results):
     """

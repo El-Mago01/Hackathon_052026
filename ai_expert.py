@@ -1,131 +1,112 @@
 from openai import OpenAI
+from openai import (
+    APIConnectionError,
+    RateLimitError,
+    APIStatusError,
+    AuthenticationError,
+    APITimeoutError
+)
 import json
 import api_key
 import user_interface as ui
 
-def generate_questions(wiki_content, child_age):
-#     client = OpenAI(
-#         api_key=api_key.api_key    )
-#
-#     schema = {
-#         "type": "object",
-#         "properties": {
-#             "questions": {
-#                 "type": "array",
-#                 "minItems": 4,
-#                 "maxItems": 4,
-#                 "items": {
-#                     "type": "object",
-#                     "properties": {
-#                         "question": {"type": "string"},
-#                         "choices": {
-#                             "type": "array",
-#                             "minItems": 4,
-#                             "maxItems": 4,
-#                             "items": {"type": "string"}
-#                         },
-#                         "correct_answer_index": {
-#                             "type": "integer",
-#                             "minimum": 0,
-#                             "maximum": 3
-#                         },
-#                         "explanation": {"type": "string"},
-#                         "difficulty": {
-#                             "type": "string",
-#                             "enum": ["easy", "medium", "hard"]
-#                         }
-#                     },
-#                     "required": [
-#                         "question",
-#                         "choices",
-#                         "correct_answer_index",
-#                         "explanation",
-#                         "difficulty"
-#                     ],
-#                     "additionalProperties": False
-#                 }
-#             }
-#         },
-#         "required": ["questions"],
-#         "additionalProperties": False
-#     }
-#
-#     response = client.responses.create(
-#         model="gpt-5-nano",
-#         input=f"""
-#     Create 4 multiple-choice questions for a child aged {child_age}.
-#     MAKE THE QUESTIONS VERY EASY AND FUN!
-#
-#     Use only the Wikipedia content below.
-#
-#     Rules:
-#     - Questions must be suitable for the child's age.
-#     - Do not make the questions too hard!
-#     - Make the questions fun!
-#     - Create exactly 4 questions.
-#     - Each question must have exactly 4 choices.
-#     - Do not add letters before the choices, for example A) or B) or C) or D).
-#     - Only one choice must be correct.
-#     - Do not use facts outside the provided content.
-#     - Keep the language simple.
-#     - Be sure that index of the correct choice should be distributed randomly.
-#     - Check that the questions follow these rules.
-#
-#
-#     Wikipedia content:
-#     {wiki_content}
-#     """,
-#         text={
-#             "format": {
-#                 "type": "json_schema",
-#                 "name": "children_wikipedia_quiz",
-#                 "schema": schema,
-#                 "strict": True
-#             }
-#         }
-#     )
+class AIQuestionGenerationError(Exception):
+    """Raised when AI question generation fails."""
+    pass
 
-    #quiz = json.loads(response.output_text)
-    quiz = {
-        "questions": [
-            {
-                "question": "Which river does London stand on?",
-                "choices": [
-                    "River Thames",
-                    "River Seine",
-                    "River Nile",
-                    "River Danube"
-                ],
-                "correct_answer_index": 0,
-                "explanation": "London stands on the River Thames.",
-                "difficulty": "easy"
-            },
-            {
-                "question": "London is the capital and largest city of which place?",
-                "choices": [
-                    "England and the United Kingdom",
-                    "Scotland",
-                    "Wales",
-                    "Ireland"
-                ],
-                "correct_answer_index": 0,
-                "explanation": "The text states London is the capital and largest city of England and the United Kingdom.",
-                "difficulty": "easy"
-            },
-            {
-                "question": "London is described as Europe's largest what?",
-                "choices": [
-                    "city economy",
-                    "city government",
-                    "port",
-                    "university"
-                ],
-                "correct_answer_index": 0,
-                "explanation": "The article calls London 'Europe's largest city economy'.",
-                "difficulty": "easy"
+def generate_questions(wiki_content, child_age):
+    client = OpenAI(
+        api_key=api_key.api_key    )
+
+
+    schema = {
+        "type": "object",
+        "properties": {
+            "questions": {
+                "type": "array",
+                "minItems": 4,
+                "maxItems": 4,
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "question": {"type": "string"},
+                        "choices": {
+                            "type": "array",
+                            "minItems": 4,
+                            "maxItems": 4,
+                            "items": {"type": "string"}
+                        },
+                        "correct_answer_index": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 3
+                        },
+                        "explanation": {"type": "string"},
+                        "difficulty": {
+                            "type": "string",
+                            "enum": ["easy", "medium", "hard"]
+                        }
+                    },
+                    "required": [
+                        "question",
+                        "choices",
+                        "correct_answer_index",
+                        "explanation",
+                        "difficulty"
+                    ],
+                    "additionalProperties": False
+                }
             }
-        ]
+        },
+        "required": ["questions"],
+        "additionalProperties": False
     }
+    try:
+        response = client.responses.create(
+            model="gpt-5-nano",
+            input=f"""
+    
+    Create 4 multiple-choice questions for a child aged {child_age}. 
+    MAKE THE QUESTIONS VERY EASY AND FUN!
+
+    Use only the Wikipedia content below.
+
+    Rules:
+    - Questions must be suitable for the child's age. 
+    - Write the question in an easy language and avoid
+      difficult words like "conventionally" or treaties.
+      Keep the language VERY simple
+    - Do not make the questions too hard!
+    - Make the questions fun!
+    - Create exactly 4 questions.
+    - Each question must have exactly 4 choices.
+    - Do not add letters before the choices, for example A) or B) or C) or D).
+    - Only one choice must be correct.
+    - Do not use facts outside the provided content.
+    - Keep the language simple.
+    - Be sure that index of the correct choice should be distributed randomly.
+    - Check that the questions follow these rules.  
+
+    Wikipedia content:
+    {wiki_content}
+    """,
+        text={
+            "format": {
+                "type": "json_schema",
+                "name": "children_wikipedia_quiz",
+                "schema": schema,
+                "strict": True
+            }
+        }
+    )
+
+    except (APITimeoutError, AuthenticationError, RateLimitError,
+            APIConnectionError, APIStatusError) as e:
+        print("Error from open AI. Questions can not be derived due to ...", e)
+        raise AIQuestionGenerationError("Questions can not be obtained. Need to abort") from e
+
+    quiz = json.loads(response.output_text)
+
     # print(json.dumps(quiz, indent=2, ensure_ascii=False))
     return quiz
 
@@ -231,8 +212,6 @@ def run_quiz(quiz):
     # Total number of questions
     total_questions = len(quiz["questions"])
     ui.score_board(score, total_questions)
-
-    # print(results)
 
     # Return all question results
     return results, score, total_questions

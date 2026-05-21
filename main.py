@@ -6,8 +6,6 @@ from threading import Thread
 import requests
 
 
-
-
 MAP_CATEGORY_TO_TITLE = {
     "Animals": [
         "Animal", "Dog", "Cat", "Pinniped" ],
@@ -28,6 +26,7 @@ def can_reach_url(url):
 
 
 def main():
+
     rounds_played = 0
     round_results = []          # Stores dictionaries of round number, score, total questions for each round played
 
@@ -42,6 +41,9 @@ def main():
 
         selected_category = ui.get_user_category(MAP_CATEGORY_TO_TITLE)
         wiki_data = ""
+
+        ui.show_prep_waiting_sign()
+
         for sub_category in MAP_CATEGORY_TO_TITLE[selected_category]:
             wiki_data += fwd.fetch_wiki_data(sub_category)
         child_wiki_data = (age, wiki_data)
@@ -52,9 +54,13 @@ def main():
         loader_thread.start()
         try:
             quiz=ask_ai.generate_questions(age, wiki_data)
+
+        except ask_ai.AIQuestionGenerationError:
+            break
         finally:
             stop_event.set()
             loader_thread.join()
+
         rounds_played += 1
         results, score, total_questions = ask_ai.run_quiz(quiz)
 
@@ -66,15 +72,16 @@ def main():
 
         round_results.append(round_dict)
 
-        # print(round_results)
-
         # Ask if the user wants to play again
         if ui.play_game_again() == False:
             # Exit the loop if answer is not "yes"
             break
-    # print(round_results)
     ui.display_final_scoreboard(round_results)
     ui.thank_you(name)
 
 if __name__ == "__main__":
     main()
+
+
+
+
