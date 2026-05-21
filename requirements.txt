@@ -1,0 +1,6 @@
+Package   Version
+--------- -------
+pillow    12.2.0
+pip       26.1.1
+pygame    2.6.1
+wikipedia 1.4.0
